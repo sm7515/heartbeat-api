@@ -16,6 +16,21 @@ router.get("/getGroups", (req, res) => {
     });
 });
 
+router.get("/getTop20Groups", (req, res) => {
+  const data = [];
+  db.collection("groups")
+    .orderBy("score", "desc")
+    .limit(20)
+    .get()
+    .then(function(querySnapshot) {
+      querySnapshot.forEach(function(doc) {
+        data.push(doc.data());
+        // console.log(doc.id, " => ", doc.data());
+      });
+      res.status(200).send(data);
+    });
+});
+
 router.get("/getGroup", (req, res) => {
   console.log(`group number is ${req.query.No}`);
   const id = req.query.No;
