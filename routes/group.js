@@ -16,20 +16,41 @@ router.get("/getGroups", (req, res) => {
     });
 });
 
-router.get("/getTop20Groups", (req, res) => {
-  const data = [];
+router.get("/getByRank", (req, res) => {
+  let data = [];
   db.collection("groups")
     .orderBy("score", "desc")
-    .limit(20)
     .get()
-    .then(function(querySnapshot) {
+    .then(async function(querySnapshot) {
       querySnapshot.forEach(function(doc) {
+        // let curScore = doc.data().score;
         data.push(doc.data());
         // console.log(doc.id, " => ", doc.data());
       });
-      res.status(200).send(data);
+      data = await handleData(data);
+      await res.status(200).send(data);
     });
 });
+
+const handleData = async function(data) {
+  let count = 0;
+  let prevScore = data[0].score;
+  let result = [];
+  let length = 0;
+  for (let i = 0; i < data.length; i++) {
+    // console.log(data[i].score, prevScore);
+    if (data[i].score !== prevScore) {
+      count += length;
+      length = 1;
+      prevScore = data[i].score;
+    } else {
+      length += 1;
+    }
+    result.push(data[i]);
+    result[i].rank = count + 1;
+  }
+  return result;
+};
 
 router.get("/getGroup", (req, res) => {
   console.log(`group number is ${req.query.No}`);
@@ -91,7 +112,7 @@ router.post("/updateGroupScore", (req, res) => {
   const id = req.body.id + "";
   db.collection("groups")
     .doc(id)
-    .update({ score: score })
+    .update({ score: parseInt(score) })
     .then(() => {
       console.log(`successfully update group${id}'s score to ${score}`);
       res.status(200).send("ok");
